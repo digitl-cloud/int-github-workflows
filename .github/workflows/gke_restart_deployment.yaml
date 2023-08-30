@@ -22,7 +22,7 @@ on:
 
 jobs:
   build:
-    name: K8S Deploy
+    name: GKE Restart Deployment
     runs-on: ubuntu-latest
 
     permissions:
@@ -49,6 +49,10 @@ jobs:
           cluster_name: ${{ inputs.cluster_name }}
           location: ${{ inputs.cluster_location }}
 
-      - name: kubectl
+      - name: Restart Deployment
         run: |
           kubectl rollout restart deployment -n ${{ inputs.namespace }} ${{ inputs.deployment }}
+
+      - name: Rollout Status
+        run: |
+          kubectl rollout status deployment -n ${{ inputs.namespace }} ${{ inputs.deployment }}
