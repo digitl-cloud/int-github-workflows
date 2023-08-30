@@ -1,0 +1,115 @@
+on:
+  workflow_call:
+    secrets:
+      GH_TOKEN:
+        required: true
+    inputs:
+      publish:
+        description: "If true, the package will be published to the target repository."
+        required: false
+        type: boolean
+        default: false
+      repository:
+        description: "Poetry repository to publish to. The target repository should be configured in the poetry.toml file."
+        required: false
+        type: string
+      project_id:
+        description: "GC project ID."
+        required: false
+        type: string
+      project_number:
+        description: "GC project number, not the project ID."
+        required: false
+        type: string
+      transient_semantic_release_version:
+        description: "If true, `semantic release version` will be run, without committing or triggering a release."
+        required: false
+        type: boolean
+        default: false
+    outputs:
+      version:
+        value: ${{ jobs.release.outputs.version }}
+
+env:
+  GH_TOKEN: ${{ secrets.GH_TOKEN }}
+
+jobs:
+  release:
+    name: Semantic Release
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: "write"
+      id-token: "write"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Setup Poetry
+        run: pipx install poetry
+
+      - uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+          cache: "poetry"
+
+      - name: Poetry install
+        run: poetry install
+
+      - name: Poetry key-ring
+        run: poetry self add keyrings.google-artifactregistry-auth
+
+      - name: Semantic Release Setup
+        run: |
+          git config --global user.name "Semantic Release"
+          git config --global user.email "github@digitlcloud.com"
+
+      - name: Set version output
+        id: set_version
+        run: |
+          if [[ ${{ inputs.transient_semantic_release_version}} == false ]]; then
+            echo "Setting version output..."
+            echo "version=$(poetry run semantic-release version --print)"
+            echo "version=$(poetry run semantic-release version --print)" >> $GITHUB_OUTPUT
+          else
+            echo "Setting transient version output..."
+            suffix=$(git branch --show-current | sed 's/feat\///')_$(git rev-parse --short HEAD)
+            echo "version=$(poetry run semantic-release version --build-metadata $suffix --print)"
+            echo "version=$(poetry run semantic-release version --build-metadata $suffix --print)" >> $GITHUB_OUTPUT
+          fi
+
+      - if: inputs.transient_semantic_release_version == false
+        name: Python Semantic Release
+        run: |
+          poetry run semantic-release -v version --skip-build
+
+      - if: inputs.transient_semantic_release_version == true
+        name: Python Semantic Release (transient)
+        run: |
+          suffix=$(git branch --show-current | sed 's/feat\///')_$(git rev-parse --short HEAD)
+          poetry run semantic-release -v version \
+            --no-vcs-release \
+            --no-commit \
+            --skip-build \
+            --build-metadata $suffix
+
+      - if: inputs.publish == true
+        name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v0
+        with:
+          workload_identity_provider: "projects/${{ inputs.project_number }}/locations/global/workloadIdentityPools/github-actions/providers/github-actions"
+          service_account: "github-actions@${{ inputs.project_id }}.iam.gserviceaccount.com"
+
+      - if: inputs.publish == true
+        name: Set up Cloud SDK
+        uses: "google-github-actions/setup-gcloud@v0"
+
+      - if: inputs.publish == true
+        name: Poetry publish
+        run: poetry publish --build -r ${{ inputs.repository }} --skip-existing
+
+    outputs:
+      version: ${{ steps.set_version.outputs.version }}

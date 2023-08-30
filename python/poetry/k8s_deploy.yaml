@@ -1,0 +1,54 @@
+on:
+  workflow_call:
+    inputs:
+      project_id:
+        required: true
+        type: string
+      project_number:
+        required: true
+        type: string
+      cluster_name:
+        required: true
+        type: string
+      cluster_location:
+        required: true
+        type: string
+      namespace:
+        required: true
+        type: string
+      deployment:
+        required: true
+        type: string
+
+jobs:
+  build:
+    name: K8S Deploy
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: "read"
+      id-token: "write"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - id: Auth
+        name: "Authenticate to Google Cloud"
+        uses: "google-github-actions/auth@v0"
+        with:
+          workload_identity_provider: "projects/${{ inputs.project_number }}/locations/global/workloadIdentityPools/github-actions/providers/github-actions"
+          service_account: "github-actions@${{ inputs.project_id }}.iam.gserviceaccount.com"
+
+      - name: Set up Cloud SDK
+        uses: "google-github-actions/setup-gcloud@v0"
+
+      - name: Get cluster credentials
+        uses: 'google-github-actions/get-gke-credentials@v1'
+        with:
+          cluster_name: ${{ inputs.cluster_name }}
+          location: ${{ inputs.cluster_location }}
+
+      - name: kubectl
+        run: |
+          kubectl rollout restart deployment -n ${{ inputs.namespace }} ${{ inputs.deployment }}
