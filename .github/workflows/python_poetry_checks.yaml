@@ -40,26 +40,21 @@ jobs:
         run: poetry install
         
       - if: inputs.black == true
-        name: Linter
+        name: black
         run: |
           poetry run black --check .
         
       - if: inputs.flake8 == true
-        name: Linter
+        name: flake8
         run: |
           poetry run flake8
           
       - if: inputs.pytest == true
-        name: Tests
-        run: |
-          poetry run pytest
-          
-      - if: inputs.pytest == true
-        name: Tests
+        name: pytest
         run: |
           poetry run pytest
           
       - if: inputs.ruff == true
-        name: Tests
+        name: ruff
         run: |
           poetry run ruff .
