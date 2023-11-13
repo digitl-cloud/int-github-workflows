@@ -1,5 +1,22 @@
 on:
   workflow_call:
+    inputs:
+      black:
+        type: boolean
+        required: false
+        default: true
+      flake8:
+        type: boolean
+        required: false
+        default: true
+      pytest:
+        type: boolean
+        required: false
+        default: true
+      ruff:
+        type: boolean
+        required: false
+        default: false
 
 jobs:
   checks:
@@ -22,11 +39,27 @@ jobs:
       - name: Poetry Install
         run: poetry install
         
-      - name: Linter
+      - if: inputs.black == true
+        name: Linter
         run: |
           poetry run black --check .
+        
+      - if: inputs.flake8 == true
+        name: Linter
+        run: |
           poetry run flake8
           
-      - name: Tests
+      - if: inputs.pytest == true
+        name: Tests
         run: |
           poetry run pytest
+          
+      - if: inputs.pytest == true
+        name: Tests
+        run: |
+          poetry run pytest
+          
+      - if: inputs.ruff == true
+        name: Tests
+        run: |
+          poetry run ruff .
