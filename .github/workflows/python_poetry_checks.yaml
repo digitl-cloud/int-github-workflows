@@ -9,14 +9,18 @@ on:
         type: boolean
         required: false
         default: true
-      pytest:
-        type: boolean
-        required: false
-        default: true
       ruff:
         type: boolean
         required: false
         default: false
+      pyright:
+        type: boolean
+        required: false
+        default: false
+      pytest:
+        type: boolean
+        required: false
+        default: true
 
 jobs:
   checks:
@@ -38,23 +42,30 @@ jobs:
 
       - name: Poetry Install
         run: poetry install
-        
+
       - if: inputs.black == true
         name: black
         run: |
           poetry run black --check .
-        
+
       - if: inputs.flake8 == true
         name: flake8
         run: |
           poetry run flake8
-          
+
+      - if: inputs.ruff == true
+        name: ruff
+        run: |
+          poetry run ruff .
+
+      - if: inputs.pyright == true
+        name: pyright
+        run: |
+          poetry run pyright
+
       - if: inputs.pytest == true
         name: pytest
         run: |
           poetry run pytest
           
-      - if: inputs.ruff == true
-        name: ruff
-        run: |
-          poetry run ruff .
+
