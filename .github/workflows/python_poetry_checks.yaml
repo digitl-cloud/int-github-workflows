@@ -45,27 +45,20 @@ jobs:
 
       - if: inputs.black == true
         name: black
-        run: |
-          poetry run black --check .
+        run: poetry run black --check .
 
       - if: inputs.flake8 == true
         name: flake8
-        run: |
-          poetry run flake8
+        run:  poetry run flake8
 
       - if: inputs.ruff == true
         name: ruff
-        run: |
-          poetry run ruff .
+        run: poetry run ruff .
 
       - if: inputs.pyright == true
         name: pyright
-        run: |
-          poetry run pyright
+        run: poetry run pyright
 
       - if: inputs.pytest == true
         name: pytest
-        run: |
-          poetry run pytest
-          
-
+        run: poetry run pytest

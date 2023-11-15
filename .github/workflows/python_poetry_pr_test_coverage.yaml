@@ -1,0 +1,53 @@
+on:
+  workflow_call:
+    inputs:
+      thresholdAll:
+        type: number
+        required: false
+        default: 0.5
+      thresholdNew:
+        type: number
+        required: false
+        default: 1.0
+      thresholdModified:
+        type: number
+        required: false
+        default: 1.0
+
+jobs:
+  checks:
+    name: Linter & Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Setup Poetry
+        run: pipx install poetry
+
+      - uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+          cache: "poetry"
+
+      - name: Poetry Install
+        run: poetry install
+
+      - if: github.event_name == 'pull_request'
+        name: pytest
+        run: |
+          poetry run pip install pytest-cov
+          poetry run pytest --cov --cov-report=xml
+
+      - if: github.event_name == 'pull_request'
+        name: Coverage Message
+        uses: orgoro/coverage@v3.1
+        with:
+          coverageFile: coverage.xml
+          token: ${{ secrets.GITHUB_TOKEN }}
+          thresholdAll: ${{ inputs.thresholdAll }}
+          thresholdNew: ${{ inputs.thresholdNew }}
+          thresholdModified: ${{ inputs.thresholdModified }}
+          
