@@ -51,7 +51,8 @@ jobs:
       - name: Setup Poetry
         run: pipx install poetry
 
-      - uses: actions/setup-python@v4
+      - name: Setup Python
+        uses: actions/setup-python@v4
         with:
           python-version: "3.10"
           cache: "poetry"
@@ -81,13 +82,13 @@ jobs:
             echo "version=$(poetry run semantic-release version --build-metadata $suffix --print)" >> $GITHUB_OUTPUT
           fi
 
-      - if: inputs.transient_semantic_release_version == false
-        name: Python Semantic Release
+      - name: Python Semantic Release
+        if: inputs.transient_semantic_release_version == false
         run: |
           poetry run semantic-release -v version --skip-build
 
-      - if: inputs.transient_semantic_release_version == true
-        name: Python Semantic Release (transient)
+      - name: Python Semantic Release (transient)
+        if: inputs.transient_semantic_release_version == true
         run: |
           suffix=$(git branch --show-current | sed 's/feat\///')_$(git rev-parse --short HEAD)
           poetry run semantic-release -v version \
@@ -96,19 +97,19 @@ jobs:
             --skip-build \
             --build-metadata $suffix
 
-      - if: inputs.publish == true
-        name: Authenticate to Google Cloud
+      - name: Authenticate to Google Cloud
+        if: inputs.publish == true
         uses: google-github-actions/auth@v0
         with:
           workload_identity_provider: "projects/${{ inputs.project_number }}/locations/global/workloadIdentityPools/github-actions/providers/github-actions"
           service_account: "github-actions@${{ inputs.project_id }}.iam.gserviceaccount.com"
 
-      - if: inputs.publish == true
-        name: Set up Cloud SDK
+      - name: Set up Cloud SDK
+        if: inputs.publish == true
         uses: "google-github-actions/setup-gcloud@v0"
 
-      - if: inputs.publish == true
-        name: Poetry publish
+      - name: Poetry publish
+        if: inputs.publish == true
         run: poetry publish --build -r ${{ inputs.repository }} --skip-existing
 
     outputs:
