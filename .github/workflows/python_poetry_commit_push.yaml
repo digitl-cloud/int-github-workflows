@@ -4,9 +4,6 @@ on:
       GH_TOKEN:
         required: true
 
-env:
-  GH_TOKEN: ${{ secrets.GH_TOKEN }}
-
 jobs:
   commit:
     name: Manual Poetry Update, Commit & Push
@@ -39,14 +36,13 @@ jobs:
 
       - name: Create local changes
         run: |
-          git status
           git add poetry.lock
         env:
-          GITHUB_TOKEN: $GH_TOKEN
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
 
       - name: Commit & Push changes
         uses: actions-js/push@master
         with:
-          github_token: $GH_TOKEN
+          github_token: ${{ secrets.GH_TOKEN }}
           branch: main
           message: "perf: update poetry dependencies"
