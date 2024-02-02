@@ -32,7 +32,6 @@ jobs:
           fetch-depth: 0 
       - name: Create local changes
         run: |
-          git pull --rebase
           git add .
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
