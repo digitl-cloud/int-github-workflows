@@ -34,12 +34,6 @@ jobs:
       - name: Run Tests
         run: poetry run pytest
 
-      - name: Create local changes
-        run: |
-          git add poetry.lock
-        env:
-          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
-
       - name: Commit & Push changes
         uses: actions-js/push@master
         with:
