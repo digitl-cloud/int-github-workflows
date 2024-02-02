@@ -1,3 +1,5 @@
+name: "Manual Poetry Update, Commit & Push"
+
 on:
   workflow_call:
 
