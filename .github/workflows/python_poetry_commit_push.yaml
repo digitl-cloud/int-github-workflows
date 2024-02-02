@@ -27,11 +27,7 @@ jobs:
         run: poetry install
 
       - name: Update dependencies
-        run: |
-          poetry update
-          git add poetry.lock
-        env:
-          GITHUB_TOKEN: $GH_TOKEN
+        run: poetry update
   
       - name: Run Tests
         run: poetry run pytest
@@ -39,8 +35,13 @@ jobs:
       - uses: actions/checkout@master
         with:
           persist-credentials: false 
-          fetch-depth: 0           
-      
+          fetch-depth: 0 
+      - name: Create local changes
+        run: |
+          git status
+          git add poetry.lock
+        env:
+          GITHUB_TOKEN: $GH_TOKEN
       - name: Commit & Push changes
         uses: actions-js/push@master
         with:
