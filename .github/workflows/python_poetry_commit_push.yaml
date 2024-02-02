@@ -36,14 +36,20 @@ jobs:
         with:
           persist-credentials: false 
           fetch-depth: 0 
-      - name: Create local changes
+      # - name: Create local changes
+      #   run: |
+      #     git add .
+      #   env:
+      #     GITHUB_TOKEN: $GH_TOKEN
+      - name: Where are we?
         run: |
-          git add .
+          ls -la
+          pwd
         env:
           GITHUB_TOKEN: $GH_TOKEN
-      - name: Commit & Push changes
-        uses: actions-js/push@master
-        with:
-          github_token: $GH_TOKEN
-          branch: main
-          message: "perf: update poetry dependencies"
+      # - name: Commit & Push changes
+      #   uses: actions-js/push@master
+      #   with:
+      #     github_token: $GH_TOKEN
+      #     branch: main
+      #     message: "perf: update poetry dependencies"
