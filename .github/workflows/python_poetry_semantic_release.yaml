@@ -4,6 +4,10 @@ on:
       GH_TOKEN:
         required: true
     inputs:
+      workdir:
+        type: string
+        required: false
+        default: "."
       publish:
         description: "If true, the package will be published to the target repository."
         required: false
@@ -56,6 +60,9 @@ jobs:
         with:
           python-version: "3.10"
           cache: "poetry"
+
+      - name: Change directory
+        run: cd ${{ inputs.workdir }}
 
       - name: Poetry install
         run: poetry install

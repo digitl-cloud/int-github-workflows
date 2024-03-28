@@ -1,6 +1,10 @@
 on:
   workflow_call:
     inputs:
+      workdir:
+        type: string
+        required: false
+        default: "."
       black:
         type: boolean
         required: false
@@ -39,6 +43,9 @@ jobs:
         with:
           python-version: "3.10"
           cache: "poetry"
+      
+      - name: Change directory
+        run: cd ${{ inputs.workdir }}
 
       - name: Poetry Install
         run: poetry install
