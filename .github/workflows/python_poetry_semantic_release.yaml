@@ -102,6 +102,7 @@ jobs:
           poetry run semantic-release -v version \
             --no-vcs-release \
             --no-commit \
+            --no-tag \
             --skip-build \
             --build-metadata $suffix
 
