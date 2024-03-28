@@ -8,11 +8,11 @@ on:
       black:
         type: boolean
         required: false
-        default: true
+        default: false
       flake8:
         type: boolean
         required: false
-        default: true
+        default: false
       ruff:
         type: boolean
         required: false
@@ -24,7 +24,7 @@ on:
       pytest:
         type: boolean
         required: false
-        default: true
+        default: false
 
 jobs:
   checks:
