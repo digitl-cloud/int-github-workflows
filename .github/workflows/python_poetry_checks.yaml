@@ -30,6 +30,11 @@ jobs:
   checks:
     name: Linter & Tests
     runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: ${{ inputs.workdir }}
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -43,9 +48,6 @@ jobs:
         with:
           python-version: "3.10"
           cache: "poetry"
-      
-      - name: Change directory
-        run: cd ${{ inputs.workdir }}
 
       - name: Poetry Install
         run: poetry install
@@ -56,7 +58,7 @@ jobs:
 
       - if: inputs.flake8 == true
         name: flake8
-        run:  poetry run flake8
+        run: poetry run flake8
 
       - if: inputs.ruff == true
         name: ruff
