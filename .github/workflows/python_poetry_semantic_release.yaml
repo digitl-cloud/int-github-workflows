@@ -5,16 +5,12 @@ on:
         required: true
     inputs:
       workdir:
+        description: "Working directory."
         type: string
         required: false
         default: "."
-      publish:
-        description: "If true, the package will be published to the target repository."
-        required: false
-        type: boolean
-        default: false
       repository:
-        description: "Poetry repository to publish to. The target repository should be configured in the poetry.toml file."
+        description: "Poetry repository to publish to. The target repository should be configured poetry.toml."
         required: false
         type: string
       project_id:
@@ -25,14 +21,21 @@ on:
         description: "GC project number, not the project ID."
         required: false
         type: string
+      release_suffix:
+        description: "Suffix (a.k.a build metadata) appended by semantic-release to the version number."
+        required: false
+        type: string
+        default: ""
       transient_semantic_release_version:
-        description: "If true, `semantic release version` will be run, without committing or triggering a release."
+        description: "If true, `semantic-release version` will be run, without committing or triggering a release."
         required: false
         type: boolean
         default: false
-    outputs:
-      version:
-        value: ${{ jobs.release.outputs.version }}
+      publish:
+        description: "If true, the package will be published to the target repository."
+        required: false
+        type: boolean
+        default: false
 
 env:
   GH_TOKEN: ${{ secrets.GH_TOKEN }}
@@ -77,24 +80,11 @@ jobs:
           git config --global user.name "Semantic Release"
           git config --global user.email "github@digitlcloud.com"
 
-      - name: Set version output
-        id: set_version
-        run: |
-          if [[ ${{ inputs.transient_semantic_release_version}} == false ]]; then
-            echo "Setting version output..."
-            echo "version=$(poetry run semantic-release version --print)"
-            echo "version=$(poetry run semantic-release version --print)" >> $GITHUB_OUTPUT
-          else
-            echo "Setting transient version output..."
-            suffix=$(git branch --show-current | sed 's/feat\///')_$(git rev-parse --short HEAD)
-            echo "version=$(poetry run semantic-release version --build-metadata $suffix --print)"
-            echo "version=$(poetry run semantic-release version --build-metadata $suffix --print)" >> $GITHUB_OUTPUT
-          fi
-
       - name: Python Semantic Release
         if: inputs.transient_semantic_release_version == false
         run: |
           poetry run semantic-release -v version \
+            --build-metadata ${{ inputs.release_suffix }} \
             --no-changelog \
             --skip-build
 
@@ -103,12 +93,12 @@ jobs:
         run: |
           suffix=$(git branch --show-current | sed 's/feat\///')_$(git rev-parse --short HEAD)
           poetry run semantic-release -v version \
+            --build-metadata ${{ inputs.release_suffix }} \
             --no-vcs-release \
             --no-commit \
             --no-tag \
             --no-changelog \
-            --skip-build \
-            --build-metadata $suffix
+            --skip-build
 
       - name: Authenticate to Google Cloud
         if: inputs.publish == true
@@ -124,6 +114,3 @@ jobs:
       - name: Poetry publish
         if: inputs.publish == true
         run: poetry publish --build -r ${{ inputs.repository }} --skip-existing
-
-    outputs:
-      version: ${{ steps.set_version.outputs.version }}
