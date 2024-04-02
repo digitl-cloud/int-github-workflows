@@ -93,7 +93,9 @@ jobs:
       - name: Python Semantic Release
         if: inputs.transient_semantic_release_version == false
         run: |
-          poetry run semantic-release -v version --skip-build
+          poetry run semantic-release -v version \
+            --no-changelog \
+            --skip-build
 
       - name: Python Semantic Release (transient)
         if: inputs.transient_semantic_release_version == true
@@ -103,6 +105,7 @@ jobs:
             --no-vcs-release \
             --no-commit \
             --no-tag \
+            --no-changelog \
             --skip-build \
             --build-metadata $suffix
 
