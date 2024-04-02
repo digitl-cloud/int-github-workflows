@@ -9,25 +9,33 @@ on:
         type: string
         required: false
         default: "."
-      repository:
-        description: "Poetry repository to publish to. The target repository should be configured poetry.toml."
-        required: false
-        type: string
-      project_id:
-        description: "GC project ID."
-        required: false
-        type: string
-      project_number:
-        description: "GC project number, not the project ID."
-        required: false
-        type: string
       release_suffix:
         description: "Suffix (a.k.a build metadata) appended by semantic-release to the version number."
         required: false
         type: string
         default: ""
-      transient_semantic_release_version:
-        description: "If true, `semantic-release version` will be run, without committing or triggering a release."
+      release_vcs:
+        description: "If true, a Github release will be published."
+        required: false
+        type: boolean
+        default: false
+      release_commit:
+        description: "If true, the release commit will be created."
+        required: false
+        type: boolean
+        default: false
+      release_tag:
+        description: "If true, the release tag will be created."
+        required: false
+        type: boolean
+        default: false
+      release_changelog:
+        description: "If true, the changelog will be updated."
+        required: false
+        type: boolean
+        default: false
+      release_build:
+        description: "If true, the package will be built."
         required: false
         type: boolean
         default: false
@@ -36,6 +44,18 @@ on:
         required: false
         type: boolean
         default: false
+      publish_repository:
+        description: "Poetry repository to publish to. The target repository should be configured poetry.toml."
+        required: false
+        type: string
+      publish_project_id:
+        description: "GC project ID."
+        required: false
+        type: string
+      publish_project_number:
+        description: "GC project number, not the project ID."
+        required: false
+        type: string
 
 env:
   GH_TOKEN: ${{ secrets.GH_TOKEN }}
@@ -81,31 +101,33 @@ jobs:
           git config --global user.email "github@digitlcloud.com"
 
       - name: Python Semantic Release
-        if: inputs.transient_semantic_release_version == false
         run: |
+          params=()
+          if [[ ${{ inputs.release_vcs }} == false ]]; then
+            params+=("--no-vcs-release")
+          fi
+          if [[ ${{ inputs.release_commit }} == false ]]; then
+            params+=("--no-commit")
+          fi
+          if [[ ${{ inputs.release_tag }} == false ]]; then
+            params+=("--no-tag")
+          fi
+          if [[ ${{ inputs.release_changelog }} == false ]]; then
+            params+=("--no-changelog")
+          fi
+          if [[ ${{ inputs.release_build }} == false ]]; then
+            params+=("--skip-build")
+          fi
           poetry run semantic-release -v version \
             --build-metadata ${{ inputs.release_suffix }} \
-            --no-changelog \
-            --skip-build
-
-      - name: Python Semantic Release (transient)
-        if: inputs.transient_semantic_release_version == true
-        run: |
-          suffix=$(git branch --show-current | sed 's/feat\///')_$(git rev-parse --short HEAD)
-          poetry run semantic-release -v version \
-            --build-metadata ${{ inputs.release_suffix }} \
-            --no-vcs-release \
-            --no-commit \
-            --no-tag \
-            --no-changelog \
-            --skip-build
+            "${params[@]}"
 
       - name: Authenticate to Google Cloud
         if: inputs.publish == true
         uses: google-github-actions/auth@v2
         with:
-          workload_identity_provider: "projects/${{ inputs.project_number }}/locations/global/workloadIdentityPools/github-actions/providers/github-actions"
-          service_account: "github-actions@${{ inputs.project_id }}.iam.gserviceaccount.com"
+          workload_identity_provider: "projects/${{ inputs.publish_project_number }}/locations/global/workloadIdentityPools/github-actions/providers/github-actions"
+          service_account: "github-actions@${{ inputs.publish_project_id }}.iam.gserviceaccount.com"
 
       - name: Set up Cloud SDK
         if: inputs.publish == true
@@ -113,4 +135,4 @@ jobs:
 
       - name: Poetry publish
         if: inputs.publish == true
-        run: poetry publish --build -r ${{ inputs.repository }} --skip-existing
+        run: poetry publish --build -r ${{ inputs.publish_repository }} --skip-existing

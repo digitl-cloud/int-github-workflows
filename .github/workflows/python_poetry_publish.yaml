@@ -1,0 +1,73 @@
+on:
+  workflow_call:
+    secrets:
+      GH_TOKEN:
+        required: true
+    inputs:
+      workdir:
+        description: "Working directory."
+        type: string
+        required: false
+        default: "."
+      repository:
+        description: "Poetry repository to publish to. The target repository should be configured poetry.toml."
+        required: false
+        type: string
+      project_id:
+        description: "GC project ID."
+        required: false
+        type: string
+      project_number:
+        description: "GC project number, not the project ID."
+        required: false
+        type: string
+
+env:
+  GH_TOKEN: ${{ secrets.GH_TOKEN }}
+
+jobs:
+  publish:
+    name: Poetry Publish
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: ${{ inputs.workdir }}
+
+    permissions:
+      contents: "read"
+      id-token: "write"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref }}
+          fetch-depth: 0
+
+      - name: Setup Poetry
+        run: pipx install poetry
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+          cache: "poetry"
+
+      - name: Poetry install
+        run: poetry install
+
+      - name: Poetry key-ring
+        run: poetry self add keyrings.google-artifactregistry-auth
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: "projects/${{ inputs.project_number }}/locations/global/workloadIdentityPools/github-actions/providers/github-actions"
+          service_account: "github-actions@${{ inputs.project_id }}.iam.gserviceaccount.com"
+
+      - name: Set up Cloud SDK
+        uses: "google-github-actions/setup-gcloud@v2"
+
+      - name: Poetry publish
+        run: poetry publish --build -r ${{ inputs.repository }} --skip-existing
