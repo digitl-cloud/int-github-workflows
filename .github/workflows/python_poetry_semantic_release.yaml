@@ -56,6 +56,9 @@ on:
         description: "GC project number, not the project ID."
         required: false
         type: string
+    outputs:
+      version:
+        value: ${{ jobs.release.outputs.version }}
 
 env:
   GH_TOKEN: ${{ secrets.GH_TOKEN }}
@@ -100,6 +103,13 @@ jobs:
           git config --global user.name "Semantic Release"
           git config --global user.email "github@digitlcloud.com"
 
+      - name: Set version output
+        id: set_version
+        run: |
+          VERSION=$(poetry run semantic-release version --build-metadata ${{ inputs.release_suffix }} --print)
+          echo "version=$VERSION"
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
       - name: Python Semantic Release
         run: |
           params=()
@@ -136,3 +146,6 @@ jobs:
       - name: Poetry publish
         if: inputs.publish == true
         run: poetry publish --build -r ${{ inputs.publish_repository }} --skip-existing
+
+    outputs:
+      version: ${{ steps.set_version.outputs.version }}
