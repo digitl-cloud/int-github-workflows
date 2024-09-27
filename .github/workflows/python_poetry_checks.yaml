@@ -62,7 +62,7 @@ jobs:
 
       - if: inputs.ruff == true
         name: ruff
-        run: poetry run ruff .
+        run: poetry run ruff check .
 
       - if: inputs.pyright == true
         name: pyright
