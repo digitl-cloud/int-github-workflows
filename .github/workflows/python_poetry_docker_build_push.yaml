@@ -73,10 +73,14 @@ jobs:
             europe-docker.pkg.dev/${{ inputs.project_id }}/docker/${{ inputs.name }}:${{ steps.safe_tag.outputs.safe_tag }},
             europe-docker.pkg.dev/${{ inputs.project_id }}/docker/${{ inputs.name }}:latest
 
-      - name: Clean Cloud Artifact Registery
-        uses: "docker://us-docker.pkg.dev/gcr-cleaner/gcr-cleaner/gcr-cleaner-cli"
+      - name: Setup Go
+        uses: actions/setup-go@v5
         with:
-          args: >-
-            -repo=europe-docker.pkg.dev/${{ inputs.project_id }}/docker/${{ inputs.name }}
-            -tag-filter-any=.*
+          go-version: '1.21'
+
+      - name: Clean Cloud Artifact Registry
+        run: |
+          go run github.com/GoogleCloudPlatform/gcr-cleaner/cmd/gcr-cleaner-cli@latest \
+            -repo=europe-docker.pkg.dev/${{ inputs.project_id }}/docker/${{ inputs.name }} \
+            -tag-filter-any=.* \
             -keep=10
